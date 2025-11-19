@@ -1265,7 +1265,7 @@ const colors = {
 };
 
 function log(message, color = 'reset') {
-    console.log(\`\${colors[color]}\${message}\${colors.reset}\`);
+    console.log(colors[color] + message + colors.reset);
 }
 
 // Variables
@@ -1283,13 +1283,13 @@ function execSSH(command, usePassword = false) {
         if (usePassword && VPS_PASSWORD) {
             try {
                 execSync('which sshpass', { stdio: 'ignore' });
-                cmd = \`sshpass -p "\${VPS_PASSWORD}" ssh -o StrictHostKeyChecking=no root@\${VPS_IP} "\${command}"\`;
+                cmd = 'sshpass -p "' + VPS_PASSWORD + '" ssh -o StrictHostKeyChecking=no root@' + VPS_IP + ' "' + command + '"';
             } catch {
                 log('⚠️  sshpass non trouvé. Le mot de passe sera demandé.', 'yellow');
-                cmd = \`ssh -o StrictHostKeyChecking=no root@\${VPS_IP} "\${command}"\`;
+                cmd = 'ssh -o StrictHostKeyChecking=no root@' + VPS_IP + ' "' + command + '"';
             }
         } else {
-            cmd = \`ssh -o StrictHostKeyChecking=no root@\${VPS_IP} "\${command}"\`;
+            cmd = 'ssh -o StrictHostKeyChecking=no root@' + VPS_IP + ' "' + command + '"';
         }
         return execSync(cmd, { stdio: 'inherit', encoding: 'utf8' });
     } catch (error) {
@@ -1304,13 +1304,13 @@ function execSCP(source, dest, usePassword = false) {
         if (usePassword && VPS_PASSWORD) {
             try {
                 execSync('which sshpass', { stdio: 'ignore' });
-                cmd = \`sshpass -p "\${VPS_PASSWORD}" scp -o StrictHostKeyChecking=no "\${source}" root@\${VPS_IP}:\${dest}\`;
+                cmd = 'sshpass -p "' + VPS_PASSWORD + '" scp -o StrictHostKeyChecking=no "' + source + '" root@' + VPS_IP + ':' + dest;
             } catch {
                 log('⚠️  sshpass non trouvé. Le mot de passe sera demandé.', 'yellow');
-                cmd = \`scp -o StrictHostKeyChecking=no "\${source}" root@\${VPS_IP}:\${dest}\`;
+                cmd = 'scp -o StrictHostKeyChecking=no "' + source + '" root@' + VPS_IP + ':' + dest;
             }
         } else {
-            cmd = \`scp -o StrictHostKeyChecking=no "\${source}" root@\${VPS_IP}:\${dest}\`;
+            cmd = 'scp -o StrictHostKeyChecking=no "' + source + '" root@' + VPS_IP + ':' + dest;
         }
         return execSync(cmd, { stdio: 'inherit', encoding: 'utf8' });
     } catch (error) {
@@ -1340,28 +1340,27 @@ log('');
 
 // 1. Créer le fichier config.php localement
 log('📝 Création du fichier config.php...', 'cyan');
-const configContent = \`<?php
-// Configuration Supabase
-define('SUPABASE_URL', '${values.SUPABASE_URL}');
-define('SUPABASE_ANON_KEY', '${values.SUPABASE_ANON_KEY}');
-define('SUPABASE_SERVICE_KEY', '${values.SUPABASE_SERVICE_KEY}');
-
-// Telegram Guard
-define('TELEGRAM_BYPASS', false);
-
-// Timezone
-date_default_timezone_set('Europe/Paris');
-
-// Debug
-error_reporting(0);
-ini_set('display_errors', 0);
-\`;
+const configContent = '<?php\\n' +
+'// Configuration Supabase\\n' +
+"define('SUPABASE_URL', '" + values.SUPABASE_URL + "');\\n" +
+"define('SUPABASE_ANON_KEY', '" + values.SUPABASE_ANON_KEY + "');\\n" +
+"define('SUPABASE_SERVICE_KEY', '" + values.SUPABASE_SERVICE_KEY + "');\\n" +
+'\\n' +
+'// Telegram Guard\\n' +
+"define('TELEGRAM_BYPASS', false);\\n" +
+'\\n' +
+'// Timezone\\n' +
+"date_default_timezone_set('Europe/Paris');\\n" +
+'\\n' +
+'// Debug\\n' +
+'error_reporting(0);\\n' +
+"ini_set('display_errors', 0);\\n";
 
 try {
     fs.writeFileSync(path.join(process.cwd(), 'config.php'), configContent, 'utf8');
     log('✅ config.php créé avec succès', 'green');
 } catch (error) {
-    log(\`❌ Erreur lors de la création de config.php: \${error.message}\`, 'red');
+    log('❌ Erreur lors de la création de config.php: ' + error.message, 'red');
     process.exit(1);
 }
 
@@ -1369,12 +1368,12 @@ try {
 log('');
 log('📦 Création de la boutique sur le VPS...', 'cyan');
 try {
-    execSSH(\`mkdir -p \${CHEMIN_VPS} && chown -R www-data:www-data \${CHEMIN_VPS}\`, hasPassword);
+    execSSH('mkdir -p ' + CHEMIN_VPS + ' && chown -R www-data:www-data ' + CHEMIN_VPS, hasPassword);
     log('✅ Dossier créé sur le VPS', 'green');
 } catch (error) {
     log('⚠️  Erreur lors de la connexion au VPS.', 'red');
     log('   Vérifiez :', 'yellow');
-    log(\`   - Que l'IP est correcte : \${VPS_IP}\`);
+    log('   - Que l\\'IP est correcte : ' + VPS_IP);
     log('   - Que vous avez accès SSH');
     log('   - Que le mot de passe est correct');
     process.exit(1);
@@ -1389,7 +1388,7 @@ log('   (Upload simplifié - utilisez rsync ou scp -r pour tous les fichiers)', 
 log('');
 log('⚙️  Configuration de config.php sur le VPS...', 'cyan');
 try {
-    execSCP('config.php', \`\${CHEMIN_VPS}/config.php\`, hasPassword);
+    execSCP('config.php', CHEMIN_VPS + '/config.php', hasPassword);
     log('✅ config.php uploadé avec succès', 'green');
 } catch (error) {
     log('⚠️  Erreur lors de l'upload de config.php', 'yellow');
@@ -1399,7 +1398,7 @@ try {
 log('');
 log('🔐 Configuration des permissions...', 'cyan');
 try {
-    execSSH(\`chmod 755 \${CHEMIN_VPS} && mkdir -p \${CHEMIN_VPS}/data && chmod 755 \${CHEMIN_VPS}/data\`, hasPassword);
+    execSSH('chmod 755 ' + CHEMIN_VPS + ' && mkdir -p ' + CHEMIN_VPS + '/data && chmod 755 ' + CHEMIN_VPS + '/data', hasPassword);
     log('✅ Permissions configurées', 'green');
 } catch (error) {
     log('⚠️  Erreur lors de la configuration des permissions', 'yellow');
@@ -1409,7 +1408,7 @@ try {
 log('');
 log('🌐 Configuration Apache...', 'cyan');
 try {
-    execSSH(\`if [ -f /usr/local/bin/create-boutique.sh ]; then /usr/local/bin/create-boutique.sh \${NOM_BOUTIQUE} \${SOUS_DOMAINE}; else echo '⚠️  Script create-boutique.sh non trouvé. Créez le VirtualHost manuellement.'; fi\`, hasPassword);
+    execSSH('if [ -f /usr/local/bin/create-boutique.sh ]; then /usr/local/bin/create-boutique.sh ' + NOM_BOUTIQUE + ' ' + SOUS_DOMAINE + '; else echo \\'⚠️  Script create-boutique.sh non trouvé. Créez le VirtualHost manuellement.\\'; fi', hasPassword);
 } catch (error) {
     log('⚠️  Erreur lors de la configuration Apache', 'yellow');
 }
@@ -1418,7 +1417,7 @@ try {
 log('');
 log('🔒 Configuration SSL...', 'cyan');
 try {
-    execSSH(\`certbot --apache -d \${SOUS_DOMAINE} --non-interactive --agree-tos --email admin@\${SOUS_DOMAINE} 2>&1 || echo '⚠️  Certbot a échoué. Configurez SSL manuellement.'\`, hasPassword);
+    execSSH('certbot --apache -d ' + SOUS_DOMAINE + ' --non-interactive --agree-tos --email admin@' + SOUS_DOMAINE + ' 2>&1 || echo \\'⚠️  Certbot a échoué. Configurez SSL manuellement.\\'', hasPassword);
 } catch (error) {
     log('⚠️  Erreur lors de la configuration SSL', 'yellow');
 }
@@ -1432,21 +1431,21 @@ log('');
 log('📋 Actions manuelles restantes :', 'yellow');
 log('');
 log('   1. Configurez le DNS :', 'cyan');
-log(\`      Type: A\`);
-log(\`      Name: \${SOUS_DOMAINE.split('.')[0]}\`);
-log(\`      Value: \${VPS_IP}\`);
-log(\`      TTL: 3600\`);
+log('      Type: A');
+log('      Name: ' + SOUS_DOMAINE.split('.')[0]);
+log('      Value: ' + VPS_IP);
+log('      TTL: 3600');
 log('');
 log('   2. Créez le compte admin :', 'cyan');
-log(\`      https://\${SOUS_DOMAINE}/create_admin.php\`);
+log('      https://' + SOUS_DOMAINE + '/create_admin.php');
 log('');
 log('   3. Supprimez create_admin.php après création');
 log('');
 log('   4. Vérifiez la boutique :', 'cyan');
-log(\`      https://\${SOUS_DOMAINE}/shop/\`);
+log('      https://' + SOUS_DOMAINE + '/shop/');
 log('');
 log('   5. Vérifiez le panel admin :', 'cyan');
-log(\`      https://\${SOUS_DOMAINE}/admin/\`);
+log('      https://' + SOUS_DOMAINE + '/admin/');
 log('');
 log('============================================', 'cyan');
 `;
