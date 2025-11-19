@@ -1106,9 +1106,9 @@ if ($CHEMIN_LOCAL -eq $PWD) {
     if (Get-Command rsync -ErrorAction SilentlyContinue) {
         if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
             $env:SSHPASS = $VPS_PASSWORD
-            sshpass -e rsync -avz --exclude="deploy.ps1" --exclude="deploy.js" --exclude="run.bat" --exclude="config.php" --exclude=".git" ./ "root@$VPS_IP`:$CHEMIN_VPS/"
+            sshpass -e rsync -avz --exclude="deploy.ps1" --exclude="deploy.js" --exclude="run.bat" --exclude="config.php" --exclude=".git" ./ "root@$VPS_IP\`:$CHEMIN_VPS/"
         } else {
-            rsync -avz --exclude="deploy.ps1" --exclude="deploy.js" --exclude="run.bat" --exclude="config.php" --exclude=".git" ./ "root@$VPS_IP`:$CHEMIN_VPS/"
+            rsync -avz --exclude="deploy.ps1" --exclude="deploy.js" --exclude="run.bat" --exclude="config.php" --exclude=".git" ./ "root@$VPS_IP\`:$CHEMIN_VPS/"
         }
     } else {
         Write-Host "   Utilisation de scp (peut être lent pour beaucoup de fichiers)..." -ForegroundColor Gray
@@ -1121,10 +1121,10 @@ if ($CHEMIN_LOCAL -eq $PWD) {
             if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
                 $env:SSHPASS = $VPS_PASSWORD
                 sshpass -e ssh -o StrictHostKeyChecking=no "root@$VPS_IP" "mkdir -p \$(dirname '$remotePath')" 2>$null
-                sshpass -e scp -o StrictHostKeyChecking=no $_.FullName "root@$VPS_IP`:$remotePath" 2>$null
+                sshpass -e scp -o StrictHostKeyChecking=no $_.FullName "root@$VPS_IP\`:$remotePath" 2>$null
             } else {
                 ssh -o StrictHostKeyChecking=no "root@$VPS_IP" "mkdir -p \$(dirname '$remotePath')" 2>$null
-                scp -o StrictHostKeyChecking=no $_.FullName "root@$VPS_IP`:$remotePath" 2>$null
+                scp -o StrictHostKeyChecking=no $_.FullName "root@$VPS_IP\`:$remotePath" 2>$null
             }
         }
     }
@@ -1134,23 +1134,23 @@ if ($CHEMIN_LOCAL -eq $PWD) {
         if (Get-Command rsync -ErrorAction SilentlyContinue) {
             if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
                 $env:SSHPASS = $VPS_PASSWORD
-                sshpass -e rsync -avz --exclude=".git" "$CHEMIN_LOCAL/" "root@$VPS_IP`:$CHEMIN_VPS/"
+                sshpass -e rsync -avz --exclude=".git" "$CHEMIN_LOCAL/" "root@$VPS_IP\`:$CHEMIN_VPS/"
             } else {
-                rsync -avz --exclude=".git" "$CHEMIN_LOCAL/" "root@$VPS_IP`:$CHEMIN_VPS/"
+                rsync -avz --exclude=".git" "$CHEMIN_LOCAL/" "root@$VPS_IP\`:$CHEMIN_VPS/"
             }
         } else {
             if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
                 $env:SSHPASS = $VPS_PASSWORD
-                sshpass -e scp -r "$CHEMIN_LOCAL\*" "root@$VPS_IP`:$CHEMIN_VPS/"
+                sshpass -e scp -r "$CHEMIN_LOCAL\*" "root@$VPS_IP\`:$CHEMIN_VPS/"
             } else {
                 Write-Host "   ⚠️  sshpass non trouvé. Le mot de passe sera demandé." -ForegroundColor Yellow
-                scp -r "$CHEMIN_LOCAL\*" "root@$VPS_IP`:$CHEMIN_VPS/"
+                scp -r "$CHEMIN_LOCAL\*" "root@$VPS_IP\`:$CHEMIN_VPS/"
             }
         }
     } else {
         Write-Host "⚠️  Le chemin '$CHEMIN_LOCAL' n'existe pas." -ForegroundColor Yellow
         Write-Host "📋 Veuillez uploader les fichiers manuellement avec FileZilla ou WinSCP" -ForegroundColor Cyan
-        Write-Host "   Vers : root@$VPS_IP`:$CHEMIN_VPS/" -ForegroundColor Gray
+        Write-Host "   Vers : root@$VPS_IP\`:$CHEMIN_VPS/" -ForegroundColor Gray
     }
 }
 
