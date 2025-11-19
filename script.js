@@ -985,6 +985,473 @@ pause
 `;
 }
 
+// ============================================
+// GÉNÉRATION DU SCRIPT POWERSHELL
+// ============================================
+
+function generatePowerShellScript(values, configPhp) {
+    const cheminProjet = values.CHEMIN_PROJET && !values.CHEMIN_PROJET.includes('chemin') 
+        ? values.CHEMIN_PROJET.replace(/\\/g, '/') 
+        : '$PWD';
+    
+    const hasPassword = values.VPS_PASSWORD && values.VPS_PASSWORD.trim() !== '';
+    
+    // Échapper les valeurs pour PowerShell
+    const escapePs = (str) => {
+        if (!str) return '';
+        return str.replace(/'/g, "''").replace(/\$/g, '`$');
+    };
+    
+    return `# ============================================
+# Script de déploiement automatique PowerShell
+# Généré le ${new Date().toLocaleDateString('fr-FR')}
+# ============================================
+
+$ErrorActionPreference = "Stop"
+
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "🚀 DÉPLOIEMENT AUTOMATIQUE" -ForegroundColor Green
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Variables
+$VPS_IP = "${values.VPS_IP}"
+$NOM_BOUTIQUE = "${values.NOM_BOUTIQUE}"
+$SOUS_DOMAINE = "${values.SOUS_DOMAINE}"
+$CHEMIN_LOCAL = "${cheminProjet}"
+$CHEMIN_VPS = "/var/www/boutiques/${values.NOM_BOUTIQUE}"
+${hasPassword ? `$VPS_PASSWORD = "${values.VPS_PASSWORD}"` : '# $VPS_PASSWORD = ""'}
+
+# Vérifier que SSH est installé
+if (-not (Get-Command ssh -ErrorAction SilentlyContinue)) {
+    Write-Host "⚠️  SSH n'est pas installé ou n'est pas dans le PATH." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "📥 Installation requise :" -ForegroundColor Cyan
+    Write-Host "   1. Installez Git for Windows (inclut OpenSSH)"
+    Write-Host "   2. Ou installez OpenSSH séparément"
+    Write-Host "   3. Redémarrez ce script après installation"
+    Write-Host ""
+    Read-Host "Appuyez sur Entrée pour quitter"
+    exit 1
+}
+
+# 1. Créer le fichier config.php localement
+Write-Host "📝 Création du fichier config.php..." -ForegroundColor Cyan
+$configContent = @"
+<?php
+// Configuration Supabase
+define('SUPABASE_URL', '${escapePs(values.SUPABASE_URL)}');
+define('SUPABASE_ANON_KEY', '${escapePs(values.SUPABASE_ANON_KEY)}');
+define('SUPABASE_SERVICE_KEY', '${escapePs(values.SUPABASE_SERVICE_KEY)}');
+
+// Telegram Guard
+define('TELEGRAM_BYPASS', false);
+
+// Timezone
+date_default_timezone_set('Europe/Paris');
+
+// Debug
+error_reporting(0);
+ini_set('display_errors', 0);
+"@
+
+try {
+    [System.IO.File]::WriteAllText("$PWD\\config.php", $configContent, [System.Text.Encoding]::UTF8)
+    Write-Host "✅ config.php créé avec succès" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Erreur lors de la création de config.php: $_" -ForegroundColor Red
+    Read-Host "Appuyez sur Entrée pour quitter"
+    exit 1
+}
+
+# 2. Créer la boutique sur le VPS
+Write-Host ""
+Write-Host "📦 Création de la boutique sur le VPS..." -ForegroundColor Cyan
+$sshCommand = "mkdir -p $CHEMIN_VPS && chown -R www-data:www-data $CHEMIN_VPS"
+
+if ($VPS_PASSWORD) {
+    if (Get-Command sshpass -ErrorAction SilentlyContinue) {
+        Write-Host "   Utilisation de sshpass pour l'authentification automatique..." -ForegroundColor Gray
+        $env:SSHPASS = $VPS_PASSWORD
+        sshpass -e ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $sshCommand
+    } else {
+        Write-Host "   ⚠️  sshpass non trouvé. Le mot de passe sera demandé." -ForegroundColor Yellow
+        Write-Host "   Entrez le mot de passe SSH quand demandé :" -ForegroundColor Yellow
+        ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $sshCommand
+    }
+} else {
+    Write-Host "   Entrez le mot de passe SSH quand demandé :" -ForegroundColor Yellow
+    ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $sshCommand
+}
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "⚠️  Erreur lors de la connexion au VPS." -ForegroundColor Red
+    Write-Host "   Vérifiez :" -ForegroundColor Yellow
+    Write-Host "   - Que l'IP est correcte : $VPS_IP"
+    Write-Host "   - Que vous avez accès SSH"
+    Write-Host "   - Que le mot de passe est correct"
+    Read-Host "Appuyez sur Entrée pour quitter"
+    exit 1
+}
+Write-Host "✅ Dossier créé sur le VPS" -ForegroundColor Green
+
+# 3. Uploader les fichiers
+Write-Host ""
+Write-Host "📤 Upload des fichiers..." -ForegroundColor Cyan
+if ($CHEMIN_LOCAL -eq $PWD) {
+    Write-Host "📁 Upload depuis le dossier actuel..." -ForegroundColor Gray
+    Write-Host "   (Sauf deploy.ps1, deploy.js, run.bat et config.php)" -ForegroundColor Gray
+    
+    if (Get-Command rsync -ErrorAction SilentlyContinue) {
+        if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
+            $env:SSHPASS = $VPS_PASSWORD
+            sshpass -e rsync -avz --exclude="deploy.ps1" --exclude="deploy.js" --exclude="run.bat" --exclude="config.php" --exclude=".git" ./ "root@$VPS_IP`:$CHEMIN_VPS/"
+        } else {
+            rsync -avz --exclude="deploy.ps1" --exclude="deploy.js" --exclude="run.bat" --exclude="config.php" --exclude=".git" ./ "root@$VPS_IP`:$CHEMIN_VPS/"
+        }
+    } else {
+        Write-Host "   Utilisation de scp (peut être lent pour beaucoup de fichiers)..." -ForegroundColor Gray
+        Get-ChildItem -Recurse -File | Where-Object { 
+            $_.Name -notin @('deploy.ps1', 'deploy.js', 'run.bat', 'config.php')
+        } | ForEach-Object {
+            $relPath = $_.FullName.Replace($PWD, '').Replace('\\', '/').TrimStart('/')
+            $remotePath = "$CHEMIN_VPS/$relPath"
+            
+            if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
+                $env:SSHPASS = $VPS_PASSWORD
+                sshpass -e ssh -o StrictHostKeyChecking=no "root@$VPS_IP" "mkdir -p \$(dirname '$remotePath')" 2>$null
+                sshpass -e scp -o StrictHostKeyChecking=no $_.FullName "root@$VPS_IP`:$remotePath" 2>$null
+            } else {
+                ssh -o StrictHostKeyChecking=no "root@$VPS_IP" "mkdir -p \$(dirname '$remotePath')" 2>$null
+                scp -o StrictHostKeyChecking=no $_.FullName "root@$VPS_IP`:$remotePath" 2>$null
+            }
+        }
+    }
+} else {
+    if (Test-Path $CHEMIN_LOCAL) {
+        Write-Host "📁 Upload depuis : $CHEMIN_LOCAL" -ForegroundColor Gray
+        if (Get-Command rsync -ErrorAction SilentlyContinue) {
+            if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
+                $env:SSHPASS = $VPS_PASSWORD
+                sshpass -e rsync -avz --exclude=".git" "$CHEMIN_LOCAL/" "root@$VPS_IP`:$CHEMIN_VPS/"
+            } else {
+                rsync -avz --exclude=".git" "$CHEMIN_LOCAL/" "root@$VPS_IP`:$CHEMIN_VPS/"
+            }
+        } else {
+            if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
+                $env:SSHPASS = $VPS_PASSWORD
+                sshpass -e scp -r "$CHEMIN_LOCAL\*" "root@$VPS_IP`:$CHEMIN_VPS/"
+            } else {
+                Write-Host "   ⚠️  sshpass non trouvé. Le mot de passe sera demandé." -ForegroundColor Yellow
+                scp -r "$CHEMIN_LOCAL\*" "root@$VPS_IP`:$CHEMIN_VPS/"
+            }
+        }
+    } else {
+        Write-Host "⚠️  Le chemin '$CHEMIN_LOCAL' n'existe pas." -ForegroundColor Yellow
+        Write-Host "📋 Veuillez uploader les fichiers manuellement avec FileZilla ou WinSCP" -ForegroundColor Cyan
+        Write-Host "   Vers : root@$VPS_IP`:$CHEMIN_VPS/" -ForegroundColor Gray
+    }
+}
+
+# 4. Uploader config.php
+Write-Host ""
+Write-Host "⚙️  Configuration de config.php sur le VPS..." -ForegroundColor Cyan
+if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
+    $env:SSHPASS = $VPS_PASSWORD
+    sshpass -e scp -o StrictHostKeyChecking=no config.php "root@$VPS_IP`:$CHEMIN_VPS/config.php"
+} else {
+    scp -o StrictHostKeyChecking=no config.php "root@$VPS_IP`:$CHEMIN_VPS/config.php"
+}
+
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "✅ config.php uploadé avec succès" -ForegroundColor Green
+} else {
+    Write-Host "⚠️  Erreur lors de l'upload de config.php" -ForegroundColor Yellow
+}
+
+# 5. Configurer les permissions
+Write-Host ""
+Write-Host "🔐 Configuration des permissions..." -ForegroundColor Cyan
+$permCommand = "chmod 755 $CHEMIN_VPS && mkdir -p $CHEMIN_VPS/data && chmod 755 $CHEMIN_VPS/data"
+if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
+    $env:SSHPASS = $VPS_PASSWORD
+    sshpass -e ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $permCommand
+} else {
+    ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $permCommand
+}
+Write-Host "✅ Permissions configurées" -ForegroundColor Green
+
+# 6. Créer le VirtualHost Apache
+Write-Host ""
+Write-Host "🌐 Configuration Apache..." -ForegroundColor Cyan
+$apacheCommand = "if [ -f /usr/local/bin/create-boutique.sh ]; then /usr/local/bin/create-boutique.sh $NOM_BOUTIQUE $SOUS_DOMAINE; else echo '⚠️  Script create-boutique.sh non trouvé. Créez le VirtualHost manuellement.'; fi"
+if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
+    $env:SSHPASS = $VPS_PASSWORD
+    sshpass -e ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $apacheCommand
+} else {
+    ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $apacheCommand
+}
+
+# 7. Obtenir le certificat SSL
+Write-Host ""
+Write-Host "🔒 Configuration SSL..." -ForegroundColor Cyan
+$sslCommand = "certbot --apache -d $SOUS_DOMAINE --non-interactive --agree-tos --email admin@$SOUS_DOMAINE 2>&1 || echo '⚠️  Certbot a échoué. Configurez SSL manuellement.'"
+if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
+    $env:SSHPASS = $VPS_PASSWORD
+    sshpass -e ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $sslCommand
+} else {
+    ssh -o StrictHostKeyChecking=no "root@$VPS_IP" $sslCommand
+}
+
+# Résumé
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "✅ DÉPLOIEMENT TERMINÉ !" -ForegroundColor Green
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "📋 Actions manuelles restantes :" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "   1. Configurez le DNS :" -ForegroundColor Cyan
+Write-Host "      Type: A"
+Write-Host "      Name: $($SOUS_DOMAINE.Split('.')[0])"
+Write-Host "      Value: $VPS_IP"
+Write-Host "      TTL: 3600"
+Write-Host ""
+Write-Host "   2. Créez le compte admin :" -ForegroundColor Cyan
+Write-Host "      https://$SOUS_DOMAINE/create_admin.php"
+Write-Host ""
+Write-Host "   3. Supprimez create_admin.php après création"
+Write-Host ""
+Write-Host "   4. Vérifiez la boutique :" -ForegroundColor Cyan
+Write-Host "      https://$SOUS_DOMAINE/shop/"
+Write-Host ""
+Write-Host "   5. Vérifiez le panel admin :" -ForegroundColor Cyan
+Write-Host "      https://$SOUS_DOMAINE/admin/"
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+Read-Host "Appuyez sur Entrée pour quitter"
+`;
+}
+
+// ============================================
+// GÉNÉRATION DU SCRIPT NODE.JS
+// ============================================
+
+function generateNodeScript(values, configPhp) {
+    const cheminProjet = values.CHEMIN_PROJET && !values.CHEMIN_PROJET.includes('chemin') 
+        ? values.CHEMIN_PROJET.replace(/\\/g, '/') 
+        : 'process.cwd()';
+    
+    const hasPassword = values.VPS_PASSWORD && values.VPS_PASSWORD.trim() !== '';
+    
+    return `// ============================================
+// Script de déploiement automatique Node.js
+// Généré le ${new Date().toLocaleDateString('fr-FR')}
+// ============================================
+
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+// Couleurs pour la console
+const colors = {
+    reset: '\\x1b[0m',
+    green: '\\x1b[32m',
+    yellow: '\\x1b[33m',
+    red: '\\x1b[31m',
+    cyan: '\\x1b[36m'
+};
+
+function log(message, color = 'reset') {
+    console.log(\`\${colors[color]}\${message}\${colors.reset}\`);
+}
+
+// Variables
+const VPS_IP = "${values.VPS_IP}";
+const NOM_BOUTIQUE = "${values.NOM_BOUTIQUE}";
+const SOUS_DOMAINE = "${values.SOUS_DOMAINE}";
+const CHEMIN_LOCAL = ${cheminProjet === 'process.cwd()' ? 'process.cwd()' : `"${cheminProjet}"`};
+const CHEMIN_VPS = "/var/www/boutiques/${values.NOM_BOUTIQUE}";
+${hasPassword ? `const VPS_PASSWORD = "${values.VPS_PASSWORD}";` : '// const VPS_PASSWORD = "";'}
+
+// Fonction pour exécuter des commandes SSH
+function execSSH(command, usePassword = false) {
+    try {
+        let cmd;
+        if (usePassword && VPS_PASSWORD) {
+            try {
+                execSync('which sshpass', { stdio: 'ignore' });
+                cmd = \`sshpass -p "\${VPS_PASSWORD}" ssh -o StrictHostKeyChecking=no root@\${VPS_IP} "\${command}"\`;
+            } catch {
+                log('⚠️  sshpass non trouvé. Le mot de passe sera demandé.', 'yellow');
+                cmd = \`ssh -o StrictHostKeyChecking=no root@\${VPS_IP} "\${command}"\`;
+            }
+        } else {
+            cmd = \`ssh -o StrictHostKeyChecking=no root@\${VPS_IP} "\${command}"\`;
+        }
+        return execSync(cmd, { stdio: 'inherit', encoding: 'utf8' });
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Fonction pour exécuter des commandes SCP
+function execSCP(source, dest, usePassword = false) {
+    try {
+        let cmd;
+        if (usePassword && VPS_PASSWORD) {
+            try {
+                execSync('which sshpass', { stdio: 'ignore' });
+                cmd = \`sshpass -p "\${VPS_PASSWORD}" scp -o StrictHostKeyChecking=no "\${source}" root@\${VPS_IP}:\${dest}\`;
+            } catch {
+                log('⚠️  sshpass non trouvé. Le mot de passe sera demandé.', 'yellow');
+                cmd = \`scp -o StrictHostKeyChecking=no "\${source}" root@\${VPS_IP}:\${dest}\`;
+            }
+        } else {
+            cmd = \`scp -o StrictHostKeyChecking=no "\${source}" root@\${VPS_IP}:\${dest}\`;
+        }
+        return execSync(cmd, { stdio: 'inherit', encoding: 'utf8' });
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Vérifier que SSH est installé
+try {
+    execSync('which ssh', { stdio: 'ignore' });
+} catch {
+    log('⚠️  SSH n\\'est pas installé ou n\\'est pas dans le PATH.', 'yellow');
+    log('');
+    log('📥 Installation requise :', 'cyan');
+    log('   1. Installez Git for Windows (inclut OpenSSH)');
+    log('   2. Ou installez OpenSSH séparément');
+    log('   3. Redémarrez ce script après installation');
+    log('');
+    process.exit(1);
+}
+
+log('');
+log('============================================', 'cyan');
+log('🚀 DÉPLOIEMENT AUTOMATIQUE', 'green');
+log('============================================', 'cyan');
+log('');
+
+// 1. Créer le fichier config.php localement
+log('📝 Création du fichier config.php...', 'cyan');
+const configContent = \`<?php
+// Configuration Supabase
+define('SUPABASE_URL', '${values.SUPABASE_URL}');
+define('SUPABASE_ANON_KEY', '${values.SUPABASE_ANON_KEY}');
+define('SUPABASE_SERVICE_KEY', '${values.SUPABASE_SERVICE_KEY}');
+
+// Telegram Guard
+define('TELEGRAM_BYPASS', false);
+
+// Timezone
+date_default_timezone_set('Europe/Paris');
+
+// Debug
+error_reporting(0);
+ini_set('display_errors', 0);
+\`;
+
+try {
+    fs.writeFileSync(path.join(process.cwd(), 'config.php'), configContent, 'utf8');
+    log('✅ config.php créé avec succès', 'green');
+} catch (error) {
+    log(\`❌ Erreur lors de la création de config.php: \${error.message}\`, 'red');
+    process.exit(1);
+}
+
+// 2. Créer la boutique sur le VPS
+log('');
+log('📦 Création de la boutique sur le VPS...', 'cyan');
+try {
+    execSSH(\`mkdir -p \${CHEMIN_VPS} && chown -R www-data:www-data \${CHEMIN_VPS}\`, hasPassword);
+    log('✅ Dossier créé sur le VPS', 'green');
+} catch (error) {
+    log('⚠️  Erreur lors de la connexion au VPS.', 'red');
+    log('   Vérifiez :', 'yellow');
+    log(\`   - Que l'IP est correcte : \${VPS_IP}\`);
+    log('   - Que vous avez accès SSH');
+    log('   - Que le mot de passe est correct');
+    process.exit(1);
+}
+
+// 3. Uploader les fichiers
+log('');
+log('📤 Upload des fichiers...', 'cyan');
+log('   (Upload simplifié - utilisez rsync ou scp -r pour tous les fichiers)', 'yellow');
+
+// 4. Uploader config.php
+log('');
+log('⚙️  Configuration de config.php sur le VPS...', 'cyan');
+try {
+    execSCP('config.php', \`\${CHEMIN_VPS}/config.php\`, hasPassword);
+    log('✅ config.php uploadé avec succès', 'green');
+} catch (error) {
+    log('⚠️  Erreur lors de l'upload de config.php', 'yellow');
+}
+
+// 5. Configurer les permissions
+log('');
+log('🔐 Configuration des permissions...', 'cyan');
+try {
+    execSSH(\`chmod 755 \${CHEMIN_VPS} && mkdir -p \${CHEMIN_VPS}/data && chmod 755 \${CHEMIN_VPS}/data\`, hasPassword);
+    log('✅ Permissions configurées', 'green');
+} catch (error) {
+    log('⚠️  Erreur lors de la configuration des permissions', 'yellow');
+}
+
+// 6. Créer le VirtualHost Apache
+log('');
+log('🌐 Configuration Apache...', 'cyan');
+try {
+    execSSH(\`if [ -f /usr/local/bin/create-boutique.sh ]; then /usr/local/bin/create-boutique.sh \${NOM_BOUTIQUE} \${SOUS_DOMAINE}; else echo '⚠️  Script create-boutique.sh non trouvé. Créez le VirtualHost manuellement.'; fi\`, hasPassword);
+} catch (error) {
+    log('⚠️  Erreur lors de la configuration Apache', 'yellow');
+}
+
+// 7. Obtenir le certificat SSL
+log('');
+log('🔒 Configuration SSL...', 'cyan');
+try {
+    execSSH(\`certbot --apache -d \${SOUS_DOMAINE} --non-interactive --agree-tos --email admin@\${SOUS_DOMAINE} 2>&1 || echo '⚠️  Certbot a échoué. Configurez SSL manuellement.'\`, hasPassword);
+} catch (error) {
+    log('⚠️  Erreur lors de la configuration SSL', 'yellow');
+}
+
+// Résumé
+log('');
+log('============================================', 'cyan');
+log('✅ DÉPLOIEMENT TERMINÉ !', 'green');
+log('============================================', 'cyan');
+log('');
+log('📋 Actions manuelles restantes :', 'yellow');
+log('');
+log('   1. Configurez le DNS :', 'cyan');
+log(\`      Type: A\`);
+log(\`      Name: \${SOUS_DOMAINE.split('.')[0]}\`);
+log(\`      Value: \${VPS_IP}\`);
+log(\`      TTL: 3600\`);
+log('');
+log('   2. Créez le compte admin :', 'cyan');
+log(\`      https://\${SOUS_DOMAINE}/create_admin.php\`);
+log('');
+log('   3. Supprimez create_admin.php après création');
+log('');
+log('   4. Vérifiez la boutique :', 'cyan');
+log(\`      https://\${SOUS_DOMAINE}/shop/\`);
+log('');
+log('   5. Vérifiez le panel admin :', 'cyan');
+log(\`      https://\${SOUS_DOMAINE}/admin/\`);
+log('');
+log('============================================', 'cyan');
+`;
+}
+
 function downloadBatFile(content) {
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
