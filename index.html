@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide de Déploiement - Boutique E-commerce</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">🚀 Guide Déploiement</div>
+            <div class="nav-links">
+                <a href="#vue-densemble" class="nav-link">Vue d'ensemble</a>
+                <a href="#prerequis" class="nav-link">Prérequis</a>
+                <a href="#vps" class="nav-link">Déploiement</a>
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Basculer le thème">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header class="hero">
+            <h1 class="hero-title">🚀 Guide Complet de Déploiement</h1>
+            <p class="hero-subtitle">Boutique E-commerce - Déploiement Rapide et Efficace</p>
+        </header>
+
+        <div class="config-panel">
+            <h2>⚙️ Configuration Personnalisée</h2>
+            <p class="config-subtitle">Remplissez ces champs pour générer automatiquement vos commandes personnalisées :</p>
+            <div class="config-grid">
+                <div class="config-item">
+                    <label for="vps-ip">IP du VPS :</label>
+                    <input type="text" id="vps-ip" placeholder="157.180.44.114" value="157.180.44.114">
+                </div>
+                <div class="config-item">
+                    <label for="nom-boutique">Nom de la boutique :</label>
+                    <input type="text" id="nom-boutique" placeholder="boutique1">
+                </div>
+                <div class="config-item">
+                    <label for="sous-domaine">Sous-domaine :</label>
+                    <input type="text" id="sous-domaine" placeholder="boutique1.votre-domaine.com">
+                </div>
+                <div class="config-item">
+                    <label for="chemin-projet">Chemin du projet local :</label>
+                    <input type="text" id="chemin-projet" placeholder="/chemin/vers/votre/boutique">
+                </div>
+                <div class="config-item">
+                    <label for="supabase-url">URL Supabase :</label>
+                    <input type="text" id="supabase-url" placeholder="https://VOTRE-PROJET.supabase.co">
+                </div>
+                <div class="config-item">
+                    <label for="supabase-anon-key">Clé Supabase Anon :</label>
+                    <input type="text" id="supabase-anon-key" placeholder="VOTRE_CLE_ANON_ICI">
+                </div>
+                <div class="config-item">
+                    <label for="supabase-service-key">Clé Supabase Service :</label>
+                    <input type="text" id="supabase-service-key" placeholder="VOTRE_CLE_SERVICE_ICI">
+                </div>
+                <div class="config-item">
+                    <label for="repo-git">URL du dépôt Git :</label>
+                    <input type="text" id="repo-git" placeholder="https://github.com/user/repo.git">
+                </div>
+                <div class="config-item">
+                    <label for="vps-password">Mot de passe VPS (SSH) :</label>
+                    <input type="password" id="vps-password" placeholder="Mot de passe root du VPS">
+                    <small class="config-hint">⚠️ Le mot de passe sera utilisé automatiquement par le script</small>
+                </div>
+            </div>
+            <div class="config-actions">
+                <button class="reset-btn" onclick="resetConfig()">🔄 Réinitialiser</button>
+                <button class="generate-btn" onclick="generateDeploymentScript()">🚀 Générer le script de déploiement</button>
+            </div>
+        </div>
+
+        <!-- Modal pour le script généré -->
+        <div id="deployment-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📦 Script de Déploiement Généré</h2>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="info-box">
+                        <strong>✅ Fichier run.bat téléchargé !</strong>
+                        <p>Le fichier <code>run.bat</code> a été téléchargé automatiquement. Placez-le dans votre projet et double-cliquez dessus pour lancer le déploiement automatique.</p>
+                    </div>
+                    <div class="script-tabs">
+                        <button class="tab-btn active" onclick="showTab('config', this)">config.php</button>
+                        <button class="tab-btn" onclick="showTab('deploy', this)">Script Déploiement</button>
+                        <button class="tab-btn" onclick="showTab('bat', this)">run.bat (Windows)</button>
+                        <button class="tab-btn" onclick="showTab('manual', this)">Actions Manuelles</button>
+                    </div>
+                    <div id="tab-config" class="tab-content active">
+                        <div class="code-block">
+                            <pre><code id="generated-config"></code></pre>
+                        </div>
+                        <button class="copy-btn" onclick="copyGenerated('config')">📋 Copier config.php</button>
+                    </div>
+                    <div id="tab-deploy" class="tab-content">
+                        <div class="code-block">
+                            <pre><code id="generated-deploy"></code></pre>
+                        </div>
+                        <button class="copy-btn" onclick="copyGenerated('deploy')">📋 Copier le script</button>
+                    </div>
+                    <div id="tab-bat" class="tab-content">
+                        <div class="info-box">
+                            <h3>📥 Utilisation du fichier run.bat</h3>
+                            <ol>
+                                <li>Le fichier <code>run.bat</code> a été téléchargé automatiquement</li>
+                                <li>Placez-le dans le dossier racine de votre projet</li>
+                                <li>Double-cliquez sur <code>run.bat</code> pour lancer le déploiement</li>
+                                <li>Le script va automatiquement :
+                                    <ul>
+                                        <li>✅ Créer config.php</li>
+                                        <li>✅ Se connecter au VPS</li>
+                                        <li>✅ Uploader tous les fichiers</li>
+                                        <li>✅ Configurer les permissions</li>
+                                        <li>✅ Créer le VirtualHost Apache</li>
+                                        <li>✅ Configurer SSL</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                            <p class="note">⚠️ <strong>Prérequis :</strong> Vous devez avoir SSH installé (Git for Windows inclut OpenSSH)</p>
+                        </div>
+                        <div class="code-block">
+                            <pre><code id="generated-bat"></code></pre>
+                        </div>
+                        <button class="copy-btn" onclick="copyGenerated('bat')">📋 Copier le contenu du .bat</button>
+                    </div>
+                    <div id="tab-manual" class="tab-content">
+                        <div id="manual-steps" class="manual-steps"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="table-of-contents">
+                <h2>📋 Table des Matières</h2>
+                <ul>
+                    <li><a href="#vue-densemble">Vue d'ensemble</a></li>
+                    <li><a href="#prerequis">Prérequis</a></li>
+                    <li><a href="#etape-1">Étape 1 : Configuration Supabase</a></li>
+                    <li><a href="#etape-2">Étape 2 : Configuration SQLite</a></li>
+                    <li><a href="#etape-3">Étape 3 : Configuration des fichiers PHP</a></li>
+                    <li><a href="#etape-4">Étape 4 : Création du compte admin</a></li>
+                    <li><a href="#etape-5">Étape 5 : Tests de fonctionnement</a></li>
+                    <li><a href="#etape-6">Étape 6 : Déploiement sur serveur</a></li>
+                    <li><a href="#vps">Déploiement VPS Multi-boutiques</a></li>
+                    <li><a href="#securite">Sécurité et maintenance</a></li>
+                    <li><a href="#depannage">Dépannage</a></li>
+                </ul>
+            </div>
+
+            <section id="vue-densemble" class="section">
+                <h2>🎯 Vue d'ensemble</h2>
+                <p>Votre boutique utilise :</p>
+                <ul>
+                    <li><strong>Supabase</strong> : Base de données principale (produits, commandes, catégories, admins, etc.)</li>
+                    <li><strong>SQLite</strong> : Base de données locale pour les avis clients (sécurité et performance)</li>
+                    <li><strong>PHP</strong> : Backend avec API REST</li>
+                    <li><strong>Panel Admin</strong> : Interface d'administration complète</li>
+                </ul>
+            </section>
+
+            <section id="prerequis" class="section">
+                <h2>✅ Prérequis</h2>
+                <h3>Logiciels nécessaires</h3>
+                <ol>
+                    <li><strong>PHP 7.4+</strong> avec les extensions suivantes :
+                        <ul>
+                            <li>curl (pour Supabase)</li>
+                            <li>pdo_sqlite (pour les avis)</li>
+                            <li>json (généralement inclus)</li>
+                            <li>session (généralement inclus)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Serveur web</strong> :
+                        <ul>
+                            <li>Apache avec mod_rewrite (recommandé)</li>
+                            <li>Ou Nginx avec PHP-FPM</li>
+                            <li>Ou serveur PHP intégré (développement uniquement)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Compte Supabase</strong> :
+                        <ul>
+                            <li>Créez un compte sur <a href="https://supabase.com" target="_blank">supabase.com</a></li>
+                            <li>Créez un nouveau projet</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h3>Vérification des prérequis</h3>
+                <div class="code-block">
+                    <pre><code># Vérifier la version PHP
+php -v
+
+# Vérifier les extensions PHP
+php -m | grep curl
+php -m | grep pdo_sqlite
+php -m | grep json
+php -m | grep session</code></pre>
+                </div>
+            </section>
+
+            <section id="etape-1" class="section">
+                <h2>🗄 Étape 1 : Configuration Supabase</h2>
+                
+                <h3>1.1 Créer un projet Supabase</h3>
+                <ol>
+                    <li>Allez sur <a href="https://supabase.com/dashboard" target="_blank">https://supabase.com/dashboard</a></li>
+                    <li>Cliquez sur "New Project"</li>
+                    <li>Remplissez les informations :
+                        <ul>
+                            <li>Name : Nom de votre projet</li>
+                            <li>Database Password : Choisissez un mot de passe fort</li>
+                            <li>Region : Choisissez la région la plus proche</li>
+                        </ul>
+                    </li>
+                    <li>Cliquez sur "Create new project"</li>
+                    <li>Attendez 2-3 minutes que le projet soit créé</li>
+                </ol>
+
+                <h3>1.2 Récupérer les clés API</h3>
+                <ol>
+                    <li>Dans votre projet Supabase, allez dans <strong>Settings → API</strong></li>
+                    <li>Notez les informations suivantes :
+                        <ul>
+                            <li><strong>Project URL</strong> : https://xxxxx.supabase.co</li>
+                            <li><strong>anon public key</strong> : Clé publique (commence par eyJ...)</li>
+                            <li><strong>service_role key</strong> : Clé privée (⚠️ NE JAMAIS EXPOSER)</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h3>1.3 Créer les tables dans Supabase</h3>
+                <ol>
+                    <li>Dans votre projet Supabase, allez dans <strong>SQL Editor</strong></li>
+                    <li>Cliquez sur "New query"</li>
+                    <li>Cliquez sur le bouton ci-dessous pour copier le schéma SQL complet :</li>
+                </ol>
+                
+                <div class="sql-schema-container">
+                    <div class="sql-buttons">
+                        <button class="copy-sql-btn" onclick="copySupabaseSchema()">
+                            📋 Copier le schéma SQL complet
+                        </button>
+                        <button class="toggle-sql-btn" onclick="toggleSqlDisplay()">
+                            👁️ Afficher/Masquer le code SQL
+                        </button>
+                    </div>
+                    <div class="code-block sql-block" id="supabase-schema-block" style="display: none;">
+                        <pre><code id="supabase-schema-code">-- ============================================
+-- 🗄️ SCHEMA SUPABASE COMPLET
+-- Pour Boutique + Panel Admin
+-- ============================================
+-- 
+-- INSTRUCTIONS:
+-- 1. Allez sur https://supabase.com/dashboard
+-- 2. Sélectionnez votre projet
+-- 3. Allez dans SQL Editor
+-- 4. Collez ce script et exécutez-le
+-- ============================================
+
+-- ============================================
+-- 1️⃣ TABLE: ADMINS (Authentification)
+-- ============================================
+CREATE TABLE IF NOT EXISTS admins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role VARCHAR(50) DEFAULT 'admin',
+    active BOOLEAN DEFAULT true,
+    last_login TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_admins_username ON admins(username);
+CREATE INDEX IF NOT EXISTS idx_admins_email ON admins(email);
+
+-- ============================================
+-- 2️⃣ TABLE: CATEGORIES (Catégories)
+-- ============================================
+CREATE TABLE IF NOT EXISTS categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    icon VARCHAR(10),
+    image_url TEXT,
+    description TEXT,
+    enabled BOOLEAN DEFAULT true,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_categories_enabled ON categories(enabled);
+
+-- ============================================
+-- 3️⃣ TABLE: FARMS (Fermes)
+-- ============================================
+CREATE TABLE IF NOT EXISTS farms (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    image_url TEXT,
+    location VARCHAR(255),
+    enabled BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_farms_enabled ON farms(enabled);
+
+-- ============================================
+-- 4️⃣ TABLE: PRODUCTS (Produits)
+-- ============================================
+CREATE TABLE IF NOT EXISTS products (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+    farm_id UUID REFERENCES farms(id) ON DELETE SET NULL,
+    photo_url TEXT,
+    video_url TEXT,
+    medias JSONB DEFAULT '[]'::jsonb,
+    variants JSONB DEFAULT '[]'::jsonb,
+    price DECIMAL(10,2) DEFAULT 0,
+    unit VARCHAR(20) DEFAULT 'g',
+    featured BOOLEAN DEFAULT false,
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_farm ON products(farm_id);
+CREATE INDEX IF NOT EXISTS idx_products_active ON products(active);
+CREATE INDEX IF NOT EXISTS idx_products_featured ON products(featured);
+
+-- ============================================
+-- 5️⃣ TABLE: ORDERS (Commandes)
+-- ============================================
+CREATE TABLE IF NOT EXISTS orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_number VARCHAR(50) UNIQUE NOT NULL,
+    customer JSONB NOT NULL,
+    delivery_method VARCHAR(100) NOT NULL,
+    payment_method VARCHAR(100) NOT NULL,
+    products JSONB NOT NULL DEFAULT '[]'::jsonb,
+    subtotal DECIMAL(10,2) NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    whatsapp_sent BOOLEAN DEFAULT false,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_number ON orders(order_number);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
+
+-- Séquence pour les numéros de commande
+CREATE SEQUENCE IF NOT EXISTS order_seq START 1;
+
+-- Fonction pour générer le numéro de commande
+CREATE OR REPLACE FUNCTION generate_order_number()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.order_number IS NULL OR NEW.order_number = '' THEN
+        NEW.order_number := 'CMD-' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' || LPAD(NEXTVAL('order_seq')::TEXT, 6, '0');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger pour générer automatiquement le numéro
+DROP TRIGGER IF EXISTS set_order_number ON orders;
+CREATE TRIGGER set_order_number
+    BEFORE INSERT ON orders
+    FOR EACH ROW
+    EXECUTE FUNCTION generate_order_number();
+
+-- ============================================
+-- 6️⃣ TABLE: SOCIALS (Réseaux sociaux)
+-- ============================================
+CREATE TABLE IF NOT EXISTS socials (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    icon VARCHAR(10),
+    description TEXT,
+    url TEXT NOT NULL,
+    services JSONB DEFAULT '[]'::jsonb,
+    enabled BOOLEAN DEFAULT true,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_socials_enabled ON socials(enabled);
+
+-- ============================================
+-- 7️⃣ TABLE: SETTINGS (Paramètres généraux)
+-- ============================================
+CREATE TABLE IF NOT EXISTS settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key VARCHAR(255) UNIQUE NOT NULL,
+    value JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
+
+-- ============================================
+-- 8️⃣ TABLE: THEME_SETTINGS (Couleurs)
+-- ============================================
+CREATE TABLE IF NOT EXISTS theme_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    preset VARCHAR(50),
+    colors JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- 9️⃣ TABLE: TYPOGRAPHY (Typographie)
+-- ============================================
+CREATE TABLE IF NOT EXISTS typography (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    font_family VARCHAR(255) NOT NULL DEFAULT 'Inter',
+    font_weights JSONB DEFAULT '[400, 500, 600, 700]'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- 🔟 TABLE: MAINTENANCE (Maintenance)
+-- ============================================
+CREATE TABLE IF NOT EXISTS maintenance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enabled BOOLEAN DEFAULT false,
+    message TEXT,
+    image_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- 1️⃣1️⃣ TABLE: LOADING_PAGE (Page de chargement)
+-- ============================================
+CREATE TABLE IF NOT EXISTS loading_page (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enabled BOOLEAN DEFAULT false,
+    text VARCHAR(255) DEFAULT 'Chargement...',
+    style VARCHAR(50) DEFAULT 'spinner',
+    duration_ms INTEGER DEFAULT 2000,
+    background_type VARCHAR(20) DEFAULT 'color',
+    background_color VARCHAR(20) DEFAULT '#0d0f17',
+    background_image_url TEXT,
+    background_video_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- 1️⃣2️⃣ TABLE: SEASON_EVENTS (Événements saisonniers)
+-- ============================================
+CREATE TABLE IF NOT EXISTS season_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    enabled BOOLEAN DEFAULT false,
+    start_date DATE,
+    end_date DATE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_season_events_enabled ON season_events(enabled);
+CREATE INDEX IF NOT EXISTS idx_season_events_dates ON season_events(start_date, end_date);
+
+-- ============================================
+-- 1️⃣3️⃣ TABLE: COUPONS (Codes promo)
+-- ============================================
+CREATE TABLE IF NOT EXISTS coupons (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(50) UNIQUE NOT NULL,
+    type VARCHAR(20) NOT NULL DEFAULT 'fixed',
+    value DECIMAL(10,2) NOT NULL,
+    min_amount DECIMAL(10,2) DEFAULT 0,
+    expires_at TIMESTAMPTZ,
+    enabled BOOLEAN DEFAULT true,
+    usage_count INTEGER DEFAULT 0,
+    max_usage INTEGER,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
+CREATE INDEX IF NOT EXISTS idx_coupons_enabled ON coupons(enabled);
+CREATE INDEX IF NOT EXISTS idx_coupons_expires ON coupons(expires_at);
+
+-- ============================================
+-- 1️⃣4️⃣ TABLE: REVIEWS (Avis clients)
+-- ============================================
+CREATE TABLE IF NOT EXISTS reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author VARCHAR(255) NOT NULL,
+    text TEXT NOT NULL,
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5) DEFAULT 5,
+    image_url TEXT,
+    product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+    approved BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_approved ON reviews(approved);
+CREATE INDEX IF NOT EXISTS idx_reviews_created ON reviews(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_product_approved ON reviews(product_id, approved) WHERE approved = true;
+
+-- ============================================
+-- 🔧 FONCTIONS UTILITAIRES
+-- ============================================
+
+-- Fonction pour mettre à jour updated_at automatiquement
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Appliquer le trigger sur toutes les tables
+DROP TRIGGER IF EXISTS update_admins_updated_at ON admins;
+CREATE TRIGGER update_admins_updated_at BEFORE UPDATE ON admins FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_products_updated_at ON products;
+CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_categories_updated_at ON categories;
+CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_farms_updated_at ON farms;
+CREATE TRIGGER update_farms_updated_at BEFORE UPDATE ON farms FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
+CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_socials_updated_at ON socials;
+CREATE TRIGGER update_socials_updated_at BEFORE UPDATE ON socials FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_settings_updated_at ON settings;
+CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_theme_settings_updated_at ON theme_settings;
+CREATE TRIGGER update_theme_settings_updated_at BEFORE UPDATE ON theme_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_typography_updated_at ON typography;
+CREATE TRIGGER update_typography_updated_at BEFORE UPDATE ON typography FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_maintenance_updated_at ON maintenance;
+CREATE TRIGGER update_maintenance_updated_at BEFORE UPDATE ON maintenance FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_loading_page_updated_at ON loading_page;
+CREATE TRIGGER update_loading_page_updated_at BEFORE UPDATE ON loading_page FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_season_events_updated_at ON season_events;
+CREATE TRIGGER update_season_events_updated_at BEFORE UPDATE ON season_events FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_coupons_updated_at ON coupons;
+CREATE TRIGGER update_coupons_updated_at BEFORE UPDATE ON coupons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_reviews_updated_at ON reviews;
+CREATE TRIGGER update_reviews_updated_at BEFORE UPDATE ON reviews FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- 📝 DONNÉES PAR DÉFAUT
+-- ============================================
+
+-- Insérer les événements saisonniers par défaut
+INSERT INTO season_events (name, enabled) VALUES
+    ('Noël', false),
+    ('Halloween', false),
+    ('St-Valentin', false),
+    ('Pâques', false),
+    ('Nouvel An', false)
+ON CONFLICT (name) DO NOTHING;
+
+-- Insérer les paramètres de thème par défaut
+INSERT INTO theme_settings (id, preset, colors) 
+VALUES (
+    '00000000-0000-0000-0000-000000000001',
+    'dark',
+    '{
+        "textPrimary": "#ffffff",
+        "textSecondary": "#cccccc",
+        "titles": "#ffffff",
+        "backgroundMain": "#0d0f17",
+        "backgroundCards": "#1a1d29",
+        "borders": "#333333",
+        "buttonText": "#000000",
+        "buttonBg": "#ffffff",
+        "links": "#667eea",
+        "accent": "#764ba2"
+    }'::jsonb
+)
+ON CONFLICT DO NOTHING;
+
+-- Insérer la typographie par défaut
+INSERT INTO typography (id, font_family) 
+VALUES ('00000000-0000-0000-0000-000000000001', 'Inter')
+ON CONFLICT DO NOTHING;
+
+-- Insérer la maintenance par défaut
+INSERT INTO maintenance (id, enabled, message) 
+VALUES ('00000000-0000-0000-0000-000000000001', false, 'Site en maintenance')
+ON CONFLICT DO NOTHING;
+
+-- Insérer la loading page par défaut
+INSERT INTO loading_page (id, enabled) 
+VALUES ('00000000-0000-0000-0000-000000000001', false)
+ON CONFLICT DO NOTHING;
+
+-- ============================================
+-- ✅ FIN DU SCHÉMA
+-- ============================================
+-- 
+-- Après avoir exécuté ce script:
+-- 1. Vous pouvez créer votre compte admin via create_admin.php
+-- 2. Toutes les tables sont prêtes pour la boutique
+-- ============================================</code></pre>
+                    </div>
+                </div>
+                
+                <ol start="4">
+                    <li>Collez le code dans Supabase SQL Editor</li>
+                    <li>Cliquez sur "Run" ou appuyez sur Ctrl+Enter</li>
+                    <li>Vérifiez qu'il n'y a pas d'erreurs (toutes les tables doivent être créées)</li>
+                </ol>
+
+                <h3>1.4 Vérifier les tables créées</h3>
+                <p>Allez dans <strong>Table Editor</strong> et vérifiez que vous voyez les tables suivantes :</p>
+                <ul>
+                    <li>✅ admins</li>
+                    <li>✅ categories</li>
+                    <li>✅ farms</li>
+                    <li>✅ products</li>
+                    <li>✅ orders</li>
+                    <li>✅ socials</li>
+                    <li>✅ settings</li>
+                    <li>✅ theme_settings</li>
+                    <li>✅ typography</li>
+                    <li>✅ maintenance</li>
+                    <li>✅ loading_page</li>
+                    <li>✅ season_events</li>
+                    <li>✅ coupons</li>
+                    <li>✅ reviews (optionnel, car on utilise SQLite)</li>
+                </ul>
+            </section>
+
+            <section id="etape-2" class="section">
+                <h2>💾 Étape 2 : Configuration SQLite (Avis clients)</h2>
+                
+                <h3>2.1 Vérifier l'extension SQLite</h3>
+                <div class="code-block">
+                    <pre><code>php -m | grep pdo_sqlite</code></pre>
+                </div>
+                <p>Si l'extension n'est pas installée :</p>
+                <p><strong>Sur Ubuntu/Debian :</strong></p>
+                <div class="code-block">
+                    <pre><code>sudo apt-get install php-sqlite3
+# ou pour PHP 8.x
+sudo apt-get install php8.3-sqlite3</code></pre>
+                </div>
+                <p><strong>Sur Windows (XAMPP) :</strong></p>
+                <ul>
+                    <li>Ouvrez php.ini</li>
+                    <li>Décommentez la ligne : <code>extension=pdo_sqlite</code></li>
+                    <li>Redémarrez Apache</li>
+                </ul>
+
+                <h3>2.2 Créer le dossier data/</h3>
+                <div class="code-block">
+                    <pre><code># Créer le dossier
+mkdir -p data
+
+# Définir les permissions (Linux/Mac)
+chmod 755 data
+chown www-data:www-data data  # ou votre utilisateur web</code></pre>
+                </div>
+            </section>
+
+            <section id="etape-3" class="section">
+                <h2>⚙️ Étape 3 : Configuration des fichiers PHP</h2>
+                
+                <h3>3.1 Configurer config.php</h3>
+                <p>Ouvrez le fichier <code>config.php</code> à la racine et modifiez :</p>
+                <div class="code-block" data-code="config-php">
+                    <pre><code>&lt;?php
+// URL Supabase (remplacez par votre URL)
+define('SUPABASE_URL', '{{SUPABASE_URL}}');
+
+// Clé anon (publique)
+define('SUPABASE_ANON_KEY', '{{SUPABASE_ANON_KEY}}');
+
+// Clé service (PRIVÉE - ne jamais exposer)
+define('SUPABASE_SERVICE_KEY', '{{SUPABASE_SERVICE_KEY}}');
+
+// Telegram Guard (true = désactiver en développement)
+define('TELEGRAM_BYPASS', false); // Mettre true pour tests locaux
+
+// Timezone
+date_default_timezone_set('Europe/Paris'); // Modifiez selon votre région
+
+// Debug (désactiver en production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1); // Mettre à 0 en production</code></pre>
+                </div>
+            </section>
+
+            <section id="etape-4" class="section">
+                <h2>👤 Étape 4 : Création du compte Admin</h2>
+                
+                <h3>4.1 Accéder à la page de création</h3>
+                <ol>
+                    <li>Assurez-vous que votre serveur web fonctionne</li>
+                    <li>Accédez à : <code>http://votre-domaine.com/create_admin.php</code></li>
+                    <li>Vous verrez un formulaire de création de compte admin</li>
+                </ol>
+
+                <h3>4.2 Créer le compte</h3>
+                <p>Remplissez le formulaire avec :</p>
+                <ul>
+                    <li>Nom d'utilisateur : Votre nom d'admin</li>
+                    <li>Email : Votre email</li>
+                    <li>Mot de passe : Minimum 6 caractères</li>
+                    <li>Confirmer le mot de passe : Identique au mot de passe</li>
+                </ul>
+
+                <div class="warning-box">
+                    <strong>⚠️ SÉCURITÉ :</strong> Après avoir créé votre compte admin, <strong>SUPPRIMEZ</strong> le fichier <code>create_admin.php</code> pour éviter qu'un autre utilisateur crée un compte admin !
+                </div>
+            </section>
+
+            <section id="etape-5" class="section">
+                <h2>🧪 Étape 5 : Tests de fonctionnement</h2>
+                
+                <h3>5.1 Test de connexion Supabase</h3>
+                <ol>
+                    <li>Accédez à votre boutique : <code>http://votre-domaine.com/shop/</code></li>
+                    <li>Vérifiez que la page se charge sans erreur</li>
+                    <li>Ouvrez la console du navigateur (F12) et vérifiez qu'il n'y a pas d'erreurs</li>
+                </ol>
+
+                <h3>5.2 Test du panel admin</h3>
+                <ol>
+                    <li>Accédez à : <code>http://votre-domaine.com/admin/login.php</code></li>
+                    <li>Connectez-vous avec votre compte admin</li>
+                    <li>Vérifiez que le dashboard se charge</li>
+                </ol>
+            </section>
+
+            <section id="etape-6" class="section">
+                <h2>🌐 Étape 6 : Déploiement sur serveur</h2>
+                
+                <h3>6.1 Préparer les fichiers</h3>
+                <ol>
+                    <li>Nettoyer les fichiers inutiles :
+                        <ul>
+                            <li>✅ Supprimer create_admin.php (après création du compte)</li>
+                            <li>✅ Supprimer les fichiers de debug</li>
+                        </ul>
+                    </li>
+                    <li>Vérifier les permissions :
+                        <div class="code-block">
+                            <pre><code># Dossiers en écriture
+chmod 755 data/
+chmod 755 logs/
+
+# Fichiers PHP
+chmod 644 *.php</code></pre>
+                        </div>
+                    </li>
+                </ol>
+
+                <h3>6.2 Uploader les fichiers</h3>
+                <p><strong>Option A : FTP/SFTP</strong></p>
+                <ol>
+                    <li>Utilisez FileZilla ou un client FTP</li>
+                    <li>Connectez-vous à votre serveur</li>
+                    <li>Uploadez tous les fichiers dans le dossier web (ex: /var/www/html/)</li>
+                </ol>
+
+                <p><strong>Option B : Git</strong></p>
+                <div class="code-block" data-code="git-clone">
+                    <pre><code># Sur votre serveur
+git clone {{REPO_GIT}}
+cd votre-projet</code></pre>
+                </div>
+
+                <h3>6.3 Configuration du serveur web</h3>
+                <p><strong>Apache (.htaccess)</strong></p>
+                <p>Créez un fichier .htaccess à la racine :</p>
+                <div class="code-block">
+                    <pre><code># Activer mod_rewrite
+RewriteEngine On
+
+# Redirection vers shop/ si accès à la racine
+RewriteCond %{REQUEST_URI} ^/$
+RewriteRule ^(.*)$ /shop/ [R=301,L]
+
+# Protection des dossiers sensibles
+&lt;FilesMatch "^(config\.php|\.env)$"&gt;
+    Order allow,deny
+    Deny from all
+&lt;/FilesMatch&gt;</code></pre>
+                </div>
+            </section>
+
+            <section id="vps" class="section">
+                <h2>🖥️ Déploiement VPS Multi-boutiques</h2>
+                
+                <h3>Accès VPS</h3>
+                <div class="code-block" data-code="vps-access">
+                    <pre><code>ssh root@{{VPS_IP}}
+# Mot de passe : JuniorAdmin.</code></pre>
+                </div>
+
+                <h3>🚀 Installation Initiale (Une seule fois)</h3>
+                
+                <h4>1. Préparer le VPS</h4>
+                <div class="code-block" data-code="vps-prepare">
+                    <pre><code># Se connecter au VPS
+ssh root@{{VPS_IP}}
+
+# Mettre à jour
+apt update && apt upgrade -y
+
+# Installer Apache, PHP et extensions
+apt install -y apache2 php8.3 php8.3-cli php8.3-curl php8.3-sqlite3 php8.3-mbstring php8.3-xml
+
+# Activer les modules Apache
+a2enmod rewrite ssl headers
+systemctl restart apache2
+
+# Créer le dossier principal
+mkdir -p /var/www/boutiques
+chown -R www-data:www-data /var/www/boutiques</code></pre>
+                </div>
+
+                <h4>2. Installer Certbot (pour SSL)</h4>
+                <div class="code-block">
+                    <pre><code>apt install -y certbot python3-certbot-apache</code></pre>
+                </div>
+
+                <h3>⚡ Créer une nouvelle boutique (2 minutes)</h3>
+                
+                <h4>Étape 1 : Exécuter le script</h4>
+                <div class="code-block" data-code="create-boutique">
+                    <pre><code>sudo create-boutique.sh {{NOM_BOUTIQUE}} {{SOUS_DOMAINE}}
+
+# Commande générée :
+sudo create-boutique.sh {{NOM_BOUTIQUE}} {{SOUS_DOMAINE}}</code></pre>
+                </div>
+                <p>Le script va :</p>
+                <ul>
+                    <li>✅ Créer le dossier /var/www/boutiques/NOM_BOUTIQUE</li>
+                    <li>✅ Configurer les permissions</li>
+                    <li>✅ Créer le VirtualHost Apache</li>
+                    <li>✅ Activer le site</li>
+                    <li>✅ Tester la configuration</li>
+                </ul>
+
+                <h4>Étape 2 : Uploader les fichiers</h4>
+                <div class="code-block" data-code="upload-files">
+                    <pre><code># Depuis votre machine locale
+cd {{CHEMIN_PROJET}}
+scp -r * root@{{VPS_IP}}:/var/www/boutiques/{{NOM_BOUTIQUE}}/</code></pre>
+                </div>
+                <p>Ou via FTP/SFTP avec FileZilla.</p>
+
+                <h4>Étape 3 : Configurer config.php</h4>
+                <div class="code-block" data-code="config-vps">
+                    <pre><code># Sur le VPS
+nano /var/www/boutiques/{{NOM_BOUTIQUE}}/config.php</code></pre>
+                </div>
+                <p>Modifier avec les clés Supabase de cette boutique.</p>
+
+                <h4>Étape 4 : Configurer le DNS</h4>
+                <p>Dans votre panneau DNS, ajouter :</p>
+                <ul>
+                    <li><strong>Type:</strong> A</li>
+                    <li><strong>Name:</strong> <span class="dynamic-value" data-var="NOM_BOUTIQUE">{{NOM_BOUTIQUE}}</span> (ou * pour wildcard)</li>
+                    <li><strong>Value:</strong> <span class="dynamic-value" data-var="VPS_IP">{{VPS_IP}}</span></li>
+                    <li><strong>TTL:</strong> 3600</li>
+                </ul>
+
+                <h4>Étape 5 : Obtenir le certificat SSL</h4>
+                <div class="code-block" data-code="certbot">
+                    <pre><code>sudo certbot --apache -d {{SOUS_DOMAINE}}
+
+# Commande générée :
+sudo certbot --apache -d {{SOUS_DOMAINE}}</code></pre>
+                </div>
+
+                <h4>Étape 6 : Créer le compte admin</h4>
+                <ol>
+                    <li>Accéder à : <code>https://<span class="dynamic-value" data-var="SOUS_DOMAINE">{{SOUS_DOMAINE}}</span>/create_admin.php</code></li>
+                    <li>Créer le compte admin</li>
+                    <li>Supprimer create_admin.php après création : <code>rm /var/www/boutiques/<span class="dynamic-value" data-var="NOM_BOUTIQUE">{{NOM_BOUTIQUE}}</span>/create_admin.php</code></li>
+                </ol>
+
+                <h3>🔄 Backup Automatique</h3>
+                <p><strong>Backup manuel :</strong></p>
+                <div class="code-block">
+                    <pre><code>sudo backup-boutiques.sh</code></pre>
+                </div>
+                <p><strong>Backup automatique (quotidien à 2h) :</strong></p>
+                <div class="code-block">
+                    <pre><code># Éditer le crontab
+sudo crontab -e
+
+# Ajouter cette ligne
+0 2 * * * /usr/local/bin/backup-boutiques.sh</code></pre>
+                </div>
+                <p>Les backups sont stockés dans <code>/backup/boutiques/</code></p>
+
+                <h3>📋 Checklist Rapide</h3>
+                <p>Pour chaque nouvelle boutique :</p>
+                <ul>
+                    <li>✅ Exécuter create-boutique.sh</li>
+                    <li>✅ Uploader les fichiers</li>
+                    <li>✅ Configurer config.php avec les clés Supabase</li>
+                    <li>✅ Configurer le DNS</li>
+                    <li>✅ Obtenir le certificat SSL</li>
+                    <li>✅ Créer le compte admin</li>
+                    <li>✅ Supprimer create_admin.php</li>
+                    <li>✅ Tester la boutique et l'admin</li>
+                </ul>
+                <p><strong>Temps total : ~5 minutes ⏱️</strong></p>
+
+                <h3>🔧 Commandes Utiles</h3>
+                <div class="code-block" data-code="commandes-utiles">
+                    <pre><code># Voir toutes les boutiques
+ls -la /var/www/boutiques/
+
+# Voir les sites Apache activés
+apache2ctl -S
+
+# Vérifier les logs d'une boutique
+tail -f /var/log/apache2/{{NOM_BOUTIQUE}}-error.log
+
+# Redémarrer Apache
+systemctl restart apache2
+
+# Vérifier l'espace disque
+df -h
+
+# Voir les backups
+ls -lh /backup/boutiques/</code></pre>
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Lien GitHub :</strong> <a href="https://github.com/juniorrrrr345/oppppp" target="_blank">https://github.com/juniorrrrr345/oppppp</a>
+                </div>
+            </section>
+
+            <section id="securite" class="section">
+                <h2>🔒 Sécurité et maintenance</h2>
+                
+                <h3>Sécurité</h3>
+                <ul>
+                    <li><strong>Fichiers sensibles</strong> :
+                        <ul>
+                            <li>✅ .env : Ne jamais versionner</li>
+                            <li>✅ config.php : Protéger avec .htaccess</li>
+                            <li>✅ create_admin.php : Supprimer après utilisation</li>
+                        </ul>
+                    </li>
+                    <li><strong>Clés API</strong> :
+                        <ul>
+                            <li>⚠️ Service Key : Ne jamais exposer (utilisée uniquement côté serveur)</li>
+                            <li>✅ Anon Key : Peut être publique (utilisée côté client)</li>
+                        </ul>
+                    </li>
+                    <li><strong>HTTPS</strong> : Activez SSL/TLS sur votre serveur (Let's Encrypt gratuit)</li>
+                </ul>
+
+                <h3>Maintenance</h3>
+                <ul>
+                    <li><strong>Backup régulier</strong> :
+                        <ul>
+                            <li>Base Supabase : Export automatique (fonctionnalité Supabase)</li>
+                            <li>SQLite : Copier data/reviews.db régulièrement</li>
+                            <li>Fichiers : Backup complet du projet</li>
+                        </ul>
+                    </li>
+                    <li><strong>Mises à jour</strong> :
+                        <ul>
+                            <li>Mettre à jour PHP régulièrement</li>
+                            <li>Surveiller les mises à jour de sécurité</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+
+            <section id="depannage" class="section">
+                <h2>🔧 Dépannage</h2>
+                
+                <div class="troubleshooting-item">
+                    <h3>Erreur : "cURL not found"</h3>
+                    <p><strong>Solution :</strong></p>
+                    <div class="code-block">
+                        <pre><code># Ubuntu/Debian
+sudo apt-get install php-curl
+sudo systemctl restart apache2  # ou php-fpm
+# Vérifier
+php -m | grep curl</code></pre>
+                    </div>
+                </div>
+
+                <div class="troubleshooting-item">
+                    <h3>Erreur : "PDO SQLite not found"</h3>
+                    <p><strong>Solution :</strong></p>
+                    <div class="code-block">
+                        <pre><code># Ubuntu/Debian
+sudo apt-get install php-sqlite3
+sudo systemctl restart apache2
+# Vérifier
+php -m | grep pdo_sqlite</code></pre>
+                    </div>
+                </div>
+
+                <div class="troubleshooting-item">
+                    <h3>Erreur : "Cannot connect to Supabase"</h3>
+                    <p><strong>Vérifications :</strong></p>
+                    <ul>
+                        <li>✅ Vérifiez que SUPABASE_URL est correct dans config.php</li>
+                        <li>✅ Vérifiez que les clés API sont correctes</li>
+                        <li>✅ Vérifiez votre connexion internet</li>
+                        <li>✅ Vérifiez que les tables existent dans Supabase</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="checklist" class="section checklist-section">
+                <h2>✅ Checklist de déploiement</h2>
+                <div class="checklist">
+                    <label><input type="checkbox"> Compte Supabase créé</label>
+                    <label><input type="checkbox"> Tables Supabase créées (script SQL exécuté)</label>
+                    <label><input type="checkbox"> Clés API Supabase récupérées</label>
+                    <label><input type="checkbox"> config.php configuré avec les bonnes clés</label>
+                    <label><input type="checkbox"> Extension PHP curl installée</label>
+                    <label><input type="checkbox"> Extension PHP pdo_sqlite installée</label>
+                    <label><input type="checkbox"> Dossier data/ créé avec permissions</label>
+                    <label><input type="checkbox"> Fichiers uploadés sur le serveur</label>
+                    <label><input type="checkbox"> Serveur web configuré (Apache/Nginx)</label>
+                    <label><input type="checkbox"> Compte admin créé via create_admin.php</label>
+                    <label><input type="checkbox"> create_admin.php supprimé (sécurité)</label>
+                    <label><input type="checkbox"> Boutique accessible et fonctionnelle</label>
+                    <label><input type="checkbox"> Panel admin accessible et fonctionnel</label>
+                    <label><input type="checkbox"> HTTPS activé (production)</label>
+                    <label><input type="checkbox"> Debug désactivé en production</label>
+                    <label><input type="checkbox"> Backup configuré</label>
+                </div>
+            </section>
+
+            <section class="section success-section">
+                <h2>🎉 Félicitations !</h2>
+                <p>Votre boutique est maintenant déployée et prête à l'emploi !</p>
+                <p><strong>Prochaines étapes :</strong></p>
+                <ol>
+                    <li>Ajoutez vos produits via le panel admin</li>
+                    <li>Configurez les catégories</li>
+                    <li>Personnalisez les couleurs et la typographie</li>
+                    <li>Testez le processus de commande complet</li>
+                    <li>Configurez les réseaux sociaux</li>
+                    <li>Activez les événements saisonniers si besoin</li>
+                </ol>
+                <p class="success-message">Bonne chance avec votre boutique ! 🚀</p>
+            </section>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>Guide de déploiement - Boutique E-commerce</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
