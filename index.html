@@ -92,7 +92,9 @@
                     </div>
                     <div class="script-tabs">
                         <button class="tab-btn active" onclick="showTab('config', this)">config.php</button>
-                        <button class="tab-btn" onclick="showTab('deploy', this)">Script Déploiement</button>
+                        <button class="tab-btn" onclick="showTab('deploy', this)">Script Bash</button>
+                        <button class="tab-btn" onclick="showTab('ps1', this)">deploy.ps1 (PowerShell)</button>
+                        <button class="tab-btn" onclick="showTab('node', this)">deploy.js (Node.js)</button>
                         <button class="tab-btn" onclick="showTab('bat', this)">run.bat (Windows)</button>
                         <button class="tab-btn" onclick="showTab('manual', this)">Actions Manuelles</button>
                     </div>
@@ -108,25 +110,50 @@
                         </div>
                         <button class="copy-btn" onclick="copyGenerated('deploy')">📋 Copier le script</button>
                     </div>
+                    <div id="tab-ps1" class="tab-content">
+                        <div class="info-box">
+                            <h3>📥 Utilisation du fichier deploy.ps1 (PowerShell - RECOMMANDÉ)</h3>
+                            <ol>
+                                <li>Le fichier <code>deploy.ps1</code> a été téléchargé automatiquement</li>
+                                <li>Placez-le dans le dossier racine de votre projet</li>
+                                <li>Ouvrez PowerShell dans ce dossier</li>
+                                <li>Exécutez : <code>powershell -ExecutionPolicy Bypass -File deploy.ps1</code></li>
+                                <li>Le script va automatiquement tout faire !</li>
+                            </ol>
+                            <p class="note">✅ <strong>Avantages :</strong> Plus fiable que .bat, meilleure gestion des erreurs, couleurs dans la console</p>
+                        </div>
+                        <div class="code-block">
+                            <pre><code id="generated-ps1"></code></pre>
+                        </div>
+                        <button class="copy-btn" onclick="copyGenerated('ps1')">📋 Copier le contenu du .ps1</button>
+                    </div>
+                    <div id="tab-node" class="tab-content">
+                        <div class="info-box">
+                            <h3>📥 Utilisation du fichier deploy.js (Node.js)</h3>
+                            <ol>
+                                <li>Le fichier <code>deploy.js</code> a été téléchargé automatiquement</li>
+                                <li>Placez-le dans le dossier racine de votre projet</li>
+                                <li>Ouvrez un terminal dans ce dossier</li>
+                                <li>Exécutez : <code>node deploy.js</code></li>
+                                <li>Le script va automatiquement tout faire !</li>
+                            </ol>
+                            <p class="note">✅ <strong>Avantages :</strong> Très fiable, couleurs dans la console, meilleure gestion des erreurs</p>
+                            <p class="note">⚠️ <strong>Prérequis :</strong> Node.js doit être installé (https://nodejs.org)</p>
+                        </div>
+                        <div class="code-block">
+                            <pre><code id="generated-node"></code></pre>
+                        </div>
+                        <button class="copy-btn" onclick="copyGenerated('node')">📋 Copier le contenu du .js</button>
+                    </div>
                     <div id="tab-bat" class="tab-content">
                         <div class="info-box">
-                            <h3>📥 Utilisation du fichier run.bat</h3>
+                            <h3>📥 Utilisation du fichier run.bat (Windows - Alternative)</h3>
                             <ol>
                                 <li>Le fichier <code>run.bat</code> a été téléchargé automatiquement</li>
                                 <li>Placez-le dans le dossier racine de votre projet</li>
                                 <li>Double-cliquez sur <code>run.bat</code> pour lancer le déploiement</li>
-                                <li>Le script va automatiquement :
-                                    <ul>
-                                        <li>✅ Créer config.php</li>
-                                        <li>✅ Se connecter au VPS</li>
-                                        <li>✅ Uploader tous les fichiers</li>
-                                        <li>✅ Configurer les permissions</li>
-                                        <li>✅ Créer le VirtualHost Apache</li>
-                                        <li>✅ Configurer SSL</li>
-                                    </ul>
-                                </li>
                             </ol>
-                            <p class="note">⚠️ <strong>Prérequis :</strong> Vous devez avoir SSH installé (Git for Windows inclut OpenSSH)</p>
+                            <p class="note">⚠️ <strong>Note :</strong> Le script .bat peut avoir des problèmes avec les caractères spéciaux. Utilisez plutôt <code>deploy.ps1</code> ou <code>deploy.js</code> pour plus de fiabilité.</p>
                         </div>
                         <div class="code-block">
                             <pre><code id="generated-bat"></code></pre>

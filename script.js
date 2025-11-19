@@ -375,15 +375,25 @@ function generateDeploymentScript() {
     // Générer le script .bat Windows
     const batScript = generateBatScript(values, configPhp);
     
+    // Générer le script PowerShell (.ps1)
+    const psScript = generatePowerShellScript(values, configPhp);
+    
+    // Générer le script Node.js
+    const nodeScript = generateNodeScript(values, configPhp);
+    
     // Générer la liste des actions manuelles
     const manualSteps = generateManualSteps(values);
     
-    // Télécharger automatiquement le fichier run.bat
-    downloadBatFile(batScript);
+    // Télécharger automatiquement les fichiers (avec un petit délai entre chaque)
+    downloadPowerShellFile(psScript);
+    setTimeout(() => downloadNodeFile(nodeScript), 500);
+    setTimeout(() => downloadBatFile(batScript), 1000);
     
     // Afficher dans le modal
     document.getElementById('generated-config').textContent = configPhp;
     document.getElementById('generated-deploy').textContent = deployScript;
+    document.getElementById('generated-ps1').textContent = psScript;
+    document.getElementById('generated-node').textContent = nodeScript;
     document.getElementById('generated-bat').textContent = batScript;
     document.getElementById('manual-steps').innerHTML = manualSteps;
     
@@ -392,8 +402,8 @@ function generateDeploymentScript() {
     
     // Afficher un message de succès
     setTimeout(() => {
-        alert('✅ Le fichier run.bat a été téléchargé !\n\nPlacez-le dans votre projet et double-cliquez dessus pour lancer le déploiement automatique.');
-    }, 500);
+        alert('✅ Les fichiers de déploiement ont été téléchargés !\n\n📦 Fichiers téléchargés :\n- deploy.ps1 (PowerShell - RECOMMANDÉ)\n- deploy.js (Node.js)\n- run.bat (Windows)\n\n💡 Utilisez deploy.ps1 ou deploy.js pour plus de fiabilité !');
+    }, 1500);
 }
 
 function generateConfigPhp(values) {
@@ -595,6 +605,10 @@ function copyGenerated(type) {
         code = document.getElementById('generated-config').textContent;
     } else if (type === 'deploy') {
         code = document.getElementById('generated-deploy').textContent;
+    } else if (type === 'ps1') {
+        code = document.getElementById('generated-ps1').textContent;
+    } else if (type === 'node') {
+        code = document.getElementById('generated-node').textContent;
     } else if (type === 'bat') {
         code = document.getElementById('generated-bat').textContent;
     }
@@ -977,6 +991,30 @@ function downloadBatFile(content) {
     const link = document.createElement('a');
     link.href = url;
     link.download = 'run.bat';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function downloadPowerShellFile(content) {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'deploy.ps1';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function downloadNodeFile(content) {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'deploy.js';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
