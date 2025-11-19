@@ -891,6 +891,20 @@ chown -R www-data:www-data /var/www/boutiques</code></pre>
                     <pre><code>apt install -y certbot python3-certbot-apache</code></pre>
                 </div>
 
+                <h4>3. Installer les scripts de déploiement</h4>
+                <div class="code-block" data-code="install-scripts">
+                    <pre><code># Depuis votre machine locale (dans le dossier oppppp-main)
+# Uploader les scripts sur le VPS
+scp create-boutique.sh root@{{VPS_IP}}:/usr/local/bin/
+scp backup-boutiques.sh root@{{VPS_IP}}:/usr/local/bin/
+
+# Sur le VPS, rendre les scripts exécutables
+ssh root@{{VPS_IP}}
+chmod +x /usr/local/bin/create-boutique.sh
+chmod +x /usr/local/bin/backup-boutiques.sh</code></pre>
+                </div>
+                <p class="note">💡 <strong>Important :</strong> Ces scripts sont dans le dossier <code>oppppp-main</code> de votre projet. Vous devez les uploader sur le VPS une seule fois lors de l'installation initiale.</p>
+
                 <h3>⚡ Créer une nouvelle boutique (2 minutes)</h3>
                 
                 <h4>Étape 1 : Exécuter le script</h4>
