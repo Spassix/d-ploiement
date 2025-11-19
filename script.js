@@ -751,26 +751,30 @@ if %errorlevel% neq 0 (
 REM 1. Créer le fichier config.php localement
 echo 📝 Création du fichier config.php...
 REM Utiliser PowerShell pour créer le fichier de manière sûre
-powershell -Command "$content = @'
-${configPhpEscaped}
-'@; $content | Out-File -FilePath config.php -Encoding UTF8"
+powershell -NoProfile -Command "$url = '${values.SUPABASE_URL.replace(/'/g, "''").replace(/\\/g, '\\\\')}'; $anon = '${values.SUPABASE_ANON_KEY.replace(/'/g, "''").replace(/\\/g, '\\\\')}'; $service = '${values.SUPABASE_SERVICE_KEY.replace(/'/g, "''").replace(/\\/g, '\\\\')}'; $content = \"<?php`r`n`r`n// Configuration Supabase`r`ndefine('SUPABASE_URL', '$url');`r`ndefine('SUPABASE_ANON_KEY', '$anon');`r`ndefine('SUPABASE_SERVICE_KEY', '$service');`r`n`r`n// Telegram Guard`r`ndefine('TELEGRAM_BYPASS', false);`r`n`r`n// Timezone`r`ndate_default_timezone_set('Europe/Paris');`r`n`r`n// Debug`r`nerror_reporting(0);`r`nini_set('display_errors', 0);`r`n\"; [System.IO.File]::WriteAllText('$PWD\\config.php', $content, [System.Text.Encoding]::UTF8)"
 if %errorlevel% neq 0 (
-    REM Méthode alternative si PowerShell échoue
-    echo ^<?php > config.php
-    echo // Configuration Supabase >> config.php
-    echo define^('SUPABASE_URL', '${supabaseUrlEscaped}'^); >> config.php
-    echo define^('SUPABASE_ANON_KEY', '${supabaseAnonEscaped}'^); >> config.php
-    echo define^('SUPABASE_SERVICE_KEY', '${supabaseServiceEscaped}'^); >> config.php
-    echo. >> config.php
-    echo // Telegram Guard >> config.php
-    echo define^('TELEGRAM_BYPASS', false^); >> config.php
-    echo. >> config.php
-    echo // Timezone >> config.php
-    echo date_default_timezone_set^('Europe/Paris'^); >> config.php
-    echo. >> config.php
-    echo // Debug >> config.php
-    echo error_reporting^(0^); >> config.php
-    echo ini_set^('display_errors', 0^); >> config.php
+    echo ⚠️  Erreur lors de la création avec PowerShell
+    echo    Le fichier config.php sera créé manuellement plus tard
+    echo    Contenu à copier dans config.php :
+    echo.
+    echo ^<?php
+    echo.
+    echo // Configuration Supabase
+    echo define^('SUPABASE_URL', 'URL_ICI'^);
+    echo define^('SUPABASE_ANON_KEY', 'CLE_ANON_ICI'^);
+    echo define^('SUPABASE_SERVICE_KEY', 'CLE_SERVICE_ICI'^);
+    echo.
+    echo // Telegram Guard
+    echo define^('TELEGRAM_BYPASS', false^);
+    echo.
+    echo // Timezone
+    echo date_default_timezone_set^('Europe/Paris'^);
+    echo.
+    echo // Debug
+    echo error_reporting^(0^);
+    echo ini_set^('display_errors', 0^);
+    echo.
+    pause
 )
 
 if exist config.php (
