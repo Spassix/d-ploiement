@@ -1159,9 +1159,9 @@ Write-Host ""
 Write-Host "⚙️  Configuration de config.php sur le VPS..." -ForegroundColor Cyan
 if ($VPS_PASSWORD -and (Get-Command sshpass -ErrorAction SilentlyContinue)) {
     $env:SSHPASS = $VPS_PASSWORD
-    sshpass -e scp -o StrictHostKeyChecking=no config.php "root@$VPS_IP`:$CHEMIN_VPS/config.php"
+    sshpass -e scp -o StrictHostKeyChecking=no config.php "root@$VPS_IP\`:$CHEMIN_VPS/config.php"
 } else {
-    scp -o StrictHostKeyChecking=no config.php "root@$VPS_IP`:$CHEMIN_VPS/config.php"
+    scp -o StrictHostKeyChecking=no config.php "root@$VPS_IP\`:$CHEMIN_VPS/config.php"
 }
 
 if ($LASTEXITCODE -eq 0) {
