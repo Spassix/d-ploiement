@@ -632,6 +632,45 @@ function generateBatScript(values, configPhp) {
     
     const hasPassword = values.VPS_PASSWORD && values.VPS_PASSWORD.trim() !== '';
     
+    // Fonction pour échapper les caractères spéciaux pour .bat
+    const escapeBat = (str) => {
+        if (!str) return '';
+        return str
+            .replace(/\^/g, '^^')
+            .replace(/&/g, '^&')
+            .replace(/</g, '^<')
+            .replace(/>/g, '^>')
+            .replace(/\|/g, '^|')
+            .replace(/"/g, '""')
+            .replace(/%/g, '%%');
+    };
+    
+    // Créer le contenu config.php
+    const configPhpContent = `<?php
+// Configuration Supabase
+define('SUPABASE_URL', '${values.SUPABASE_URL}');
+define('SUPABASE_ANON_KEY', '${values.SUPABASE_ANON_KEY}');
+define('SUPABASE_SERVICE_KEY', '${values.SUPABASE_SERVICE_KEY}');
+
+// Telegram Guard
+define('TELEGRAM_BYPASS', false);
+
+// Timezone
+date_default_timezone_set('Europe/Paris');
+
+// Debug
+error_reporting(0);
+ini_set('display_errors', 0);
+`;
+    
+    // Échapper pour PowerShell (échapper $ et backticks)
+    const configPhpEscaped = configPhpContent.replace(/\$/g, '`$').replace(/`/g, '``');
+    
+    // Échapper les valeurs pour la méthode alternative batch
+    const supabaseUrlEscaped = escapeBat(values.SUPABASE_URL);
+    const supabaseAnonEscaped = escapeBat(values.SUPABASE_ANON_KEY);
+    const supabaseServiceEscaped = escapeBat(values.SUPABASE_SERVICE_KEY);
+    
     // Fonction helper pour les commandes SSH avec mot de passe
     const sshCommand = (command) => {
         if (hasPassword) {
@@ -711,23 +750,28 @@ if %errorlevel% neq 0 (
 
 REM 1. Créer le fichier config.php localement
 echo 📝 Création du fichier config.php...
-(
-echo <?php
-echo // Configuration Supabase
-echo define^('SUPABASE_URL', '${values.SUPABASE_URL}'^);
-echo define^('SUPABASE_ANON_KEY', '${values.SUPABASE_ANON_KEY}'^);
-echo define^('SUPABASE_SERVICE_KEY', '${values.SUPABASE_SERVICE_KEY}'^);
-echo.
-echo // Telegram Guard
-echo define^('TELEGRAM_BYPASS', false^);
-echo.
-echo // Timezone
-echo date_default_timezone_set^('Europe/Paris'^);
-echo.
-echo // Debug
-echo error_reporting^(0^);
-echo ini_set^('display_errors', 0^);
-) > config.php
+REM Utiliser PowerShell pour créer le fichier de manière sûre
+powershell -Command "$content = @'
+${configPhpEscaped}
+'@; $content | Out-File -FilePath config.php -Encoding UTF8"
+if %errorlevel% neq 0 (
+    REM Méthode alternative si PowerShell échoue
+    echo ^<?php > config.php
+    echo // Configuration Supabase >> config.php
+    echo define^('SUPABASE_URL', '${supabaseUrlEscaped}'^); >> config.php
+    echo define^('SUPABASE_ANON_KEY', '${supabaseAnonEscaped}'^); >> config.php
+    echo define^('SUPABASE_SERVICE_KEY', '${supabaseServiceEscaped}'^); >> config.php
+    echo. >> config.php
+    echo // Telegram Guard >> config.php
+    echo define^('TELEGRAM_BYPASS', false^); >> config.php
+    echo. >> config.php
+    echo // Timezone >> config.php
+    echo date_default_timezone_set^('Europe/Paris'^); >> config.php
+    echo. >> config.php
+    echo // Debug >> config.php
+    echo error_reporting^(0^); >> config.php
+    echo ini_set^('display_errors', 0^); >> config.php
+)
 
 if exist config.php (
     echo ✅ config.php créé avec succès
